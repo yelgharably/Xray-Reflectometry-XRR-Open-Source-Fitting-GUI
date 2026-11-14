@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+xrr_results/
+selftest_out/
+# never commit measurement data
+*.rasx
+*.raw
