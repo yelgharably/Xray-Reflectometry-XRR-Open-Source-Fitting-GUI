@@ -57,7 +57,7 @@ choices (fit range, footprint). Quality checks include parameters on bounds, pla
 * Test scans that were not specular reflectivity are refused rather than fitted.
 
 ## Status
-Prototype. The notebook's engine was validated on simulated data (single film and stack self-tests, run them once on your machine) and on measured films; the GUI reproduces the notebook's results exactly for the same settings.
+Prototype. The notebook's engine was validated (single film and stack self-tests, run them once on your machine) on measured films and compared to the Rigaku SmartLab Studio software; the GUI reproduces the notebook's results exactly for the same settings.
 Bundled font: Latin Modern Roman (GUST Font License, see `xrr_gui/fonts/`).
 
 <img width="1492" height="923" alt="image" src="https://github.com/user-attachments/assets/2656b581-0b8e-4846-b951-462845e51f05" />
