@@ -85,7 +85,10 @@ class App:
         ttk.Label(f, text="number of seeds").grid(row=1, column=2, sticky="e"); ttk.Entry(f, textvariable=self.nseeds, width=6).grid(row=1, column=3)
         ttk.Label(f, text="substrate beta/delta").grid(row=1, column=4, sticky="e"); ttk.Entry(f, textvariable=self.bd, width=6).grid(row=1, column=5)
         ttk.Checkbutton(f, text="also refit without each layer (is every layer needed?)", variable=self.compare).grid(row=2, column=0, columnspan=6, sticky="w", pady=(4, 0))
-        ttk.Label(f, text=f"Several seeds run in parallel (up to {MAXPAR} at once) and show whether the answer depends on the random start of the global search.", wraplength=430, foreground="#555").grid(row=3, column=0, columnspan=6, sticky="w")
+        self.profile = tk.StringVar(value="calibrated"); self.floor = tk.StringVar(value="5")
+        ttk.Label(f, text="quality checks").grid(row=3, column=0, sticky="w", pady=(4, 0)); ttk.Combobox(f, textvariable=self.profile, values=["calibrated", "strict"], state="readonly", width=10).grid(row=3, column=1, padx=4, pady=(4, 0))
+        ttk.Label(f, text="systematic floor (%)").grid(row=3, column=2, columnspan=2, sticky="e", pady=(4, 0)); ttk.Entry(f, textvariable=self.floor, width=6).grid(row=3, column=4, sticky="w", pady=(4, 0))
+        ttk.Label(f, text=f"Several seeds run in parallel (up to {MAXPAR} at once) and show whether the answer depends on the random start of the global search. 'calibrated' judges the fit against counting noise plus the systematic floor; 'strict' uses the original noise-only gates.", wraplength=430, foreground="#555").grid(row=4, column=0, columnspan=6, sticky="w")
 
         f = ttk.Frame(left, padding=(0, 8)); f.pack(fill="x")
         self.run_btn = ttk.Button(f, text="Run fit", command=self.start_fit); self.run_btn.pack(side="left"); self.stop_btn = ttk.Button(f, text="Stop", command=self.stop_fit, state="disabled"); self.stop_btn.pack(side="left", padx=6)
@@ -187,12 +190,13 @@ class App:
         if self.scan is None: messagebox.showinfo("Run", "open a .rasx scan first"); return
         try:
             layers, mats, sub = XL.to_engine(self.rows, self.ns)
-            lo, hi = float(self.lo.get()), num(self.hi.get()); seed0 = int(self.seed.get()); bd = float(self.bd.get()); n = int(self.nseeds.get())
+            lo, hi = float(self.lo.get()), num(self.hi.get()); seed0 = int(self.seed.get()); bd = float(self.bd.get()); n = int(self.nseeds.get()); floor = float(self.floor.get()) / 100.0
             if not 1 <= n <= 64: raise ValueError("number of seeds must be between 1 and 64")
+            if not 0.0 <= floor <= 0.5: raise ValueError("systematic floor must be between 0 and 50 %")
         except Exception as e:
             messagebox.showerror("Cannot run", str(e)); return
         fid = "".join(c if c.isalnum() or c in "._-" else "_" for c in (self.fid.get() or "scan"))
-        self.base = dict(scan=self.scan, layers=layers, mats=mats, sub=sub, fid=fid, compare=self.compare.get(), mode=self.mode.get(), fit_range=(lo, hi), bd=bd,
+        self.base = dict(scan=self.scan, layers=layers, mats=mats, sub=sub, fid=fid, compare=self.compare.get(), mode=self.mode.get(), fit_range=(lo, hi), bd=bd, check_profile=self.profile.get(), sys_floor=floor,
                          blank=sorted(r.name for r in self.rows if r.density is None and not r.substrate), notebook=self.ns["_NOTEBOOK"])
         self.ns["_BLANK_NAMES"] = set(self.base["blank"]); self.ns["SUBSTRATE_BETA_OVER_DELTA"] = bd           # the panel is drawn in this process
         self._reset_live(); self.out = None; self.seed_df = None; self.finished = False; self.running = True; self.stopping = False; self.stop_t = None
@@ -356,7 +360,7 @@ class App:
 
 def selftest(a):
     root = tk.Tk(); app = App(root); t0 = time.time()
-    app.open_scan(a.selftest); app.preset.set(a.preset); app.load_preset(); app.mode.set(a.mode); app.compare.set(a.compare); app.nseeds.set(str(a.seeds))
+    app.open_scan(a.selftest); app.preset.set(a.preset); app.load_preset(); app.mode.set(a.mode); app.compare.set(a.compare); app.nseeds.set(str(a.seeds)); app.profile.set(a.profile); app.floor.set(str(a.floor))
     if a.hi: app.hi.set(a.hi)
     app.start_fit(); shots = 0; gaps = []; bigs = []; last = time.time()
     while not app.finished and time.time() - t0 < a.timeout:
@@ -388,7 +392,7 @@ def _grab(root, path):
 if __name__ == "__main__":
     mp.freeze_support()
     ap = argparse.ArgumentParser(); ap.add_argument("--selftest"); ap.add_argument("--preset", default=list(XL.PRESETS)[0]); ap.add_argument("--mode", default="quick"); ap.add_argument("--compare", action="store_true"); ap.add_argument("--hi", default="")
-    ap.add_argument("--seeds", type=int, default=1); ap.add_argument("--timeout", type=float, default=1800); ap.add_argument("--outdir", default="selftest_out"); ap.add_argument("--shot", default="")
+    ap.add_argument("--seeds", type=int, default=1); ap.add_argument("--profile", default="calibrated"); ap.add_argument("--floor", type=float, default=5.0); ap.add_argument("--timeout", type=float, default=1800); ap.add_argument("--outdir", default="selftest_out"); ap.add_argument("--shot", default="")
     a = ap.parse_args()
     if a.selftest: selftest(a)
     else:

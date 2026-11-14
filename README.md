@@ -50,9 +50,21 @@ Global differential evolution, then multi-start and trust-region least squares, 
 global: scale, background, 2theta offset, substrate SLD, footprint angle, angular resolution. Uncertainties come from the covariance scaled by the reduced chi-square; a systematic error comes from refits under different
 choices (fit range, footprint). Quality checks include parameters on bounds, plausible densities, stability across refits, reduced chi-square and residual structure.
 
+## Quality checks
+The checks come in two kinds. **Reliability checks** test the parameters and are always strict: stability across refits (total and per layer) and across seeds, parameters on a bound, every layer needed (BIC), fringe agreement, dynamic range.
+**Fit-quality checks** test whether the curve matches. With 10^5 to 10^7 counts the counting noise is a fraction of a percent, so any 1 to 3 % mismatch the model cannot represent (beam footprint, resolution function, detector linearity)
+is tens of noise-sigmas, and a plain "reduced chi-square below 15" or "residual autocorrelation below 0.6" fails almost every high-count scan, also visually excellent fits.
+
+The default `calibrated` profile therefore adds a relative systematic floor (5 %, `SYS_FLOOR`) to the counting variance: `chi2_sys` below 3 means the model matches the data to about 5 %, and the residual-structure check counts only when the misfit also exceeds that floor.
+On the 19 fits we calibrated on, this passes 14 of 16 LaFeO3 fits and none of the 3 Fe on sapphire fits (median deviation 12 to 24 %); a 10 % floor was too lenient. The raw reduced chi-square is always reported, and `CHECK_PROFILE = "strict"` restores the original gates
+(in the notebook settings cell, or the `quality checks` box of the GUI). A pass on fit quality means the curve is matched, not that the layer model is unique: use the multi-seed check for that.
+
+The result is reported as **concerns** and **notes**. A failed reliability or fit-quality check is a *concern* and is counted in the verdict (`REVIEW: 2 concern(s)`). The density-plausibility check (a layer outside 70 to 115 % of its bulk density) is only a *note*:
+the apparent density depends on the assumed formula and on porosity, so a low value is information, not necessarily an error. Notes are listed but not counted (`PASS: no concerns, 1 note(s)`).
+
 ## Read this before quoting a number
 * XRR measures electron density, so a layer's "density" is only as meaningful as its assumed formula; two different oxides can be indistinguishable.
-* Check the verdict and the failed checks. A model that does not fit (large reduced chi-square, structured residuals, parameters on bounds) is missing something; do not quote its layer parameters.
+* Check the verdict and the listed concerns. A model that does not fit (large reduced chi-square, structured residuals, parameters on bounds) is missing something; do not quote its layer parameters.
 * Use the **multi-seed option** (GUI): if different random starts give different layer structures or thicknesses, the scan does not determine the model. Report the spread, not a single fit. Use at least 6 seeds; two or three can agree by chance.
 * Test scans that were not specular reflectivity are refused rather than fitted.
 

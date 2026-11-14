@@ -34,7 +34,8 @@ def run(payload, ev_q, stop_ev):
         hook = EL.FitHook(); hook.stop = _MPStop(stop_ev)
         ns = EL.load_engine(hook, payload.get("notebook"))
         EL.set_options(ns, payload["mode"], payload["fit_range"], payload["seed"], payload["bd"]); ns["_BLANK_NAMES"] = set(payload["blank"])
-        sent = {"hist": 0, "starts": 0}; done = threading.Event()
+        ns["CHECK_PROFILE"] = payload.get("check_profile", "calibrated"); ns["SYS_FLOOR"] = float(payload.get("sys_floor", 0.05))      # quality-gate profile (see the notebook notes)
+        sent ={"hist": 0, "starts": 0}; done = threading.Event()
 
         def emit():
             st = dict(hook.state); h = list(hook.history); fs = list(hook.fit_starts); msg = dict(label=hook.label, fit_no=hook.fit_no, hist=h[sent["hist"]:], starts=fs[sent["starts"]:], t=time.time() - hook.t0)
