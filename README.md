@@ -10,11 +10,38 @@ Two ways to use it, both running the same fitting engine:
 | `XRR_Fitting_Tool_v2.ipynb` | notebook: edit a settings cell (files, substrate, layer table), run, results go to `xrr_results/` |
 | `xrr_gui/` | desktop GUI: open a `.rasx`, build the layer table with buttons, watch the fit and its convergence live, get the result panel; optional multi-seed robustness check |
 
+## Setup
+You need **Python 3.9 or newer** (developed and tested on Python 3.13). Check what you have:
+```
+python --version
+```
+If it is older than 3.9, install a current Python from https://www.python.org/downloads/ (on Windows tick "Add python.exe to PATH" in the installer).
+
+Create an isolated environment and install the dependencies (numpy, scipy, pandas, matplotlib, Pillow and Jupyter):
+
+Windows (PowerShell):
+```
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+macOS / Linux:
+```
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+Without a virtual environment, the same packages in one line: `pip install numpy scipy pandas matplotlib Pillow jupyter`.
+
+The GUI also needs tkinter, which ships with Python. Check it with `python -c "import tkinter"`; if that fails on Linux, install it with `sudo apt install python3-tk`.
+Tested with numpy 2.4, scipy 1.15, pandas 2.2 and matplotlib 3.10 (the code needs scipy 1.11 or newer).
+
 ## Quick start
 ```
-pip install -r requirements.txt
-python xrr_gui/xrr_gui.py          # the GUI
-jupyter notebook XRR_Fitting_Tool_v2.ipynb
+python xrr_gui/xrr_gui.py                     # the GUI
+jupyter notebook XRR_Fitting_Tool_v2.ipynb    # or the notebook
 ```
 The GUI loads the fitting engine from the notebook's code cells, so keep `XRR_Fitting_Tool_v2.ipynb` in the folder above `xrr_gui/`. Details of the GUI are in [xrr_gui/README.md](xrr_gui/README.md).
 
